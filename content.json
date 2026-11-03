@@ -1,0 +1,145 @@
+{
+  "$comment": "Tudo que varia por campanha/nicho fica aqui. preview.label é a legenda completa da prévia. Rode `node build.js` depois de editar. Campos entre colchetes são placeholders a preencher.",
+  "site": {
+    "brand": "Achadinhos Black",
+    "baseUrl": "https://achadinhos-black-blush.vercel.app",
+    "privacyUrl": "[https://seudominio.com.br/privacidade]",
+    "eventLabel": "Black Friday · 27/11",
+    "eventDateIso": "2026-11-27",
+    "analytics": {
+      "ga4Id": "",
+      "clarityId": "",
+      "metaPixelId": ""
+    },
+    "legal": {
+      "affiliateNotice": "Os links do grupo podem ser de afiliados: podemos receber comissão por compras feitas por eles, sem custo extra para você.",
+      "priceNotice": "Preços e estoque mudam a qualquer momento. Confirme sempre na loja antes de comprar.",
+      "owner": "[Nome ou razão social do responsável]"
+    }
+  },
+  "pages": [
+    {
+      "slug": "index",
+      "niche": "geral",
+      "groupName": "Achadinhos Black",
+      "inviteUrl": "https://chat.whatsapp.com/KLwTFYR6pW5Jw7SrWzQIvn",
+      "stores": "Amazon, Shopee, Mercado Livre e Magalu",
+      "seo": {
+        "title": "Achadinhos Black | Ofertas da Black Friday no seu WhatsApp",
+        "description": "Grupo gratuito no WhatsApp com achadinhos da Black Friday conferidos: foto, preço antigo e preço novo. Você compra direto na loja. Sem spam, sai quando quiser.",
+        "ogImage": "assets/img/og-geral.png"
+      },
+      "hero": {
+        "eyebrow": "Grupo gratuito no WhatsApp",
+        "headline": "Achadinhos da Black Friday, conferidos, direto no seu WhatsApp.",
+        "headlineHighlight": "Achadinhos",
+        "subheadline": "A gente garimpa, confere o preço e manda só o que vale a pena. Você compra pelo link da própria loja.",
+        "cta": "Entrar no grupo grátis",
+        "microcopy": "Grátis • Não pedimos senha nem PIX • Saia quando quiser"
+      },
+      "benefits": [
+        {
+          "icon": "check",
+          "title": "Preço conferido",
+          "text": "Olhamos o histórico de preço antes de postar. Se o desconto não é real, não vai."
+        },
+        {
+          "icon": "clock",
+          "title": "Menos tempo garimpando",
+          "text": "Em vez de abrir dez sites, as ofertas chegam prontas na sua mão."
+        },
+        {
+          "icon": "bell",
+          "title": "Só ofertas, sem spam",
+          "text": "Grupo só de avisos: apenas os admins postam. Dá para silenciar."
+        }
+      ],
+      "steps": [
+        {
+          "title": "Toque no botão",
+          "text": "O convite abre direto no WhatsApp. Leva uns 5 segundos."
+        },
+        {
+          "title": "Entre no grupo",
+          "text": "Confirme a entrada. Não pedimos cadastro nem dados."
+        },
+        {
+          "title": "Receba e compre na loja",
+          "text": "Gostou de um achadinho? Toque no link e compre direto na loja oficial."
+        }
+      ],
+      "preview": {
+        "label": "Ofertas reais enviadas no grupo em 3/11/2026. Preços e estoque podem ter mudado desde então.",
+        "senderName": "Achadinhos Black",
+        "items": [
+          {
+            "badge": "-43% off",
+            "badgeType": "accent",
+            "image": "assets/img/prev-controle-ps4.webp",
+            "name": "Controle sem fio PlayStation DualShock 4 Preto",
+            "oldPrice": "de R$ 349,90",
+            "price": "R$ 199,49",
+            "store": "Amazon",
+            "alt": "Controle sem fio DualShock 4 preto"
+          },
+          {
+            "badge": "-21% off",
+            "badgeType": "accent",
+            "image": "assets/img/prev-hub-usb.webp",
+            "name": "Hub USB 3.0 4 portas, alumínio",
+            "oldPrice": "de R$ 36,90",
+            "price": "R$ 28,90",
+            "store": "Amazon",
+            "alt": "Hub USB 3.0 de 4 portas em alumínio"
+          }
+        ]
+      },
+      "trust": {
+        "title": "Transparência antes de você entrar",
+        "points": [
+          "O grupo é gratuito. Entrar e ficar não custa nada.",
+          "As compras são feitas direto nas lojas. Pagamento, entrega e garantia são responsabilidade do vendedor ou da plataforma.",
+          "Nunca pedimos senha, código de verificação nem PIX. Se alguém pedir, é golpe.",
+          "Alguns links são de afiliados: podemos receber comissão, sem custo extra para você.",
+          "Preços e estoque mudam rápido. Confirme na loja antes de comprar."
+        ],
+        "faq": [
+          {
+            "q": "Vou receber muita mensagem?",
+            "a": "Só ofertas, em média [X] por dia. Você pode silenciar o grupo e olhar quando quiser."
+          },
+          {
+            "q": "Meu número fica visível para os outros?",
+            "a": "[Explique como o grupo está configurado: por exemplo, se é uma Comunidade de avisos em que só admins veem os números.]"
+          },
+          {
+            "q": "De quais lojas vêm as ofertas?",
+            "a": "Principalmente {{stores}}. Todos os links levam para a loja oficial."
+          },
+          {
+            "q": "Como saio do grupo?",
+            "a": "Abra o grupo no WhatsApp, toque no nome e escolha “Sair do grupo”. Sem cadastro, sem compromisso."
+          }
+        ]
+      },
+      "final": {
+        "headline": "A Black Friday não espera. Os achados também não.",
+        "text": "Entre agora e receba as primeiras ofertas antes de esgotar.",
+        "cta": "Entrar no grupo grátis"
+      },
+      "ab": {
+        "$comment": "Índice 0 é o padrão pré-renderizado. Troque pela URL: ?h=1&c=2 (sem JS, mostra o padrão).",
+        "headlines": [
+          "Achadinhos da Black Friday, conferidos, direto no seu WhatsApp.",
+          "Receba achadinhos da Black Friday no WhatsApp, com preço conferido.",
+          "Pare de garimpar: as ofertas da Black Friday chegam no seu WhatsApp."
+        ],
+        "ctas": [
+          "Entrar no grupo grátis",
+          "Receber ofertas no WhatsApp",
+          "Quero os achadinhos"
+        ]
+      }
+    }
+  ]
+}

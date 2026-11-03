@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR" data-niche="{{niche}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{seoTitle}}</title>
+<meta name="description" content="{{seoDescription}}">
+<link rel="canonical" href="{{canonical}}">
+<meta name="theme-color" content="#0E0E10">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="{{brand}}">
+<meta property="og:title" content="{{seoTitle}}">
+<meta property="og:description" content="{{seoDescription}}">
+<meta property="og:url" content="{{canonical}}">
+<meta property="og:image" content="{{ogImage}}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{brand}}: {{eventLabel}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{seoTitle}}">
+<meta name="twitter:description" content="{{seoDescription}}">
+<meta name="twitter:image" content="{{ogImage}}">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preload" href="assets/fonts/archivo-expanded-black.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css?v={{version}}">
+<script type="application/json" id="page-config">{{configJson}}</script>
+<script src="main.js?v={{version}}" defer></script>
+</head>
+<body>
+<header class="top wrap">
+  {{logo}}
+  <p class="pill pill--urgent">{{eventLabel}}</p>
+</header>
+
+<main id="conteudo">
+  <section class="hero wrap" aria-labelledby="titulo">
+    <div class="hero__text">
+      <p class="pill pill--ok">{{iconCheck}}{{heroEyebrow}}</p>
+      <h1 id="titulo" data-ab="headline">{{heroHeadline}}</h1>
+      <p class="hero__sub">{{heroSub}}</p>
+      <a class="cta cta--lg" id="cta-hero" href="{{inviteUrl}}" data-cta="hero" rel="noopener">{{iconWhatsapp}}<span data-ab="cta">{{heroCta}}</span></a>
+      <p class="micro">{{heroMicro}}</p>
+    </div>
+    {{heroArt}}
+  </section>
+  {{abScript}}
+
+  <section class="section wrap" aria-labelledby="t-beneficios">
+    <h2 id="t-beneficios" class="visually-hidden">Por que entrar</h2>
+    <ul class="benefits" role="list">
+{{benefits}}
+    </ul>
+  </section>
+
+  <section class="section wrap how" aria-labelledby="t-como">
+    <div>
+      <h2 id="t-como">Como funciona</h2>
+      <ol class="steps" role="list">
+{{steps}}
+      </ol>
+    </div>
+{{preview}}
+  </section>
+
+  <section class="section wrap trust" aria-labelledby="t-confianca">
+    <h2 id="t-confianca">{{trustTitle}}</h2>
+    <ul class="trust__list" role="list">
+{{trustPoints}}
+    </ul>
+    <div class="faq">
+{{faq}}
+    </div>
+  </section>
+
+  <section class="final" id="final" aria-labelledby="t-final">
+    <div class="wrap final__inner">
+      <h2 id="t-final">{{finalHeadline}}</h2>
+      <p>{{finalText}}</p>
+      <a class="cta cta--lg cta--onlight" id="cta-final" href="{{inviteUrl}}" data-cta="final" rel="noopener">{{iconWhatsapp}}<span data-ab="cta">{{finalCta}}</span></a>
+      <p class="micro micro--dark">{{heroMicro}}</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__inner">
+    {{logoSmall}}
+    <div class="foot__legal">
+      <p>{{affiliateNotice}}</p>
+      <p>{{priceNotice}}</p>
+      <p>Não somos parceiros oficiais das lojas citadas. Responsável: {{owner}}.</p>
+      <p><a href="{{privacyUrl}}">Política de privacidade</a></p>
+    </div>
+  </div>
+</footer>
+
+<div class="sticky" id="sticky">
+  <a class="cta cta--block" href="{{inviteUrl}}" data-cta="sticky" rel="noopener">{{iconWhatsapp}}<span data-ab="cta">{{heroCta}}</span></a>
+</div>
+{{consent}}
+</body>
+</html>

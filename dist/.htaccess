@@ -1,0 +1,50 @@
+# Hostinger (LiteSpeed/Apache): equivalente ao vercel.json (cleanUrls + trailingSlash false)
+Options -MultiViews -Indexes
+DirectoryIndex index.html
+RewriteEngine On
+
+# HTTPS: atrás do CDN da Hostinger, %{HTTPS} pode vir "off" mesmo com o visitante em https; por
+# isso a regra também olha o X-Forwarded-Proto (o mesmo padrão da decisoesquedaolucro.com, na mesma
+# hospedagem). A validação de certificado (.well-known) passa antes.
+
+# Validação de certificado passa direto
+RewriteRule ^\.well-known/ - [L]
+
+# HTTP -> HTTPS (destino absoluto)
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^ https://radardablackfriday.store%{REQUEST_URI} [L,R=301]
+
+# /index.html ou /index -> /
+RewriteCond %{THE_REQUEST} \s/+(.*/)?index(\.html)?[\s?] [NC]
+RewriteRule ^ https://radardablackfriday.store/%1 [L,R=301]
+
+# /pagina.html -> /pagina
+RewriteCond %{THE_REQUEST} \s/+(.+?)\.html[\s?] [NC]
+RewriteRule ^ https://radardablackfriday.store/%1 [L,R=301]
+
+# Remove barra final
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+)/$ https://radardablackfriday.store/$1 [L,R=301]
+
+# /pagina -> pagina.html (interno)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+)$ $1.html [L]
+
+<IfModule mod_mime.c>
+  AddType font/woff2 .woff2
+  AddType image/webp .webp
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  <FilesMatch "\.(woff2|png|webp|svg|css|js)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+</IfModule>

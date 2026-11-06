@@ -58,7 +58,7 @@
       var f = w.fbq = function () { f.callMethod ? f.callMethod.apply(f, arguments) : f.queue.push(arguments); };
       if (!w._fbq) w._fbq = f; f.push = f; f.loaded = true; f.version = "2.0"; f.queue = [];
       loadScript("https://connect.facebook.net/en_US/fbevents.js");
-      w.fbq("init", a.metaPixelId); w.fbq("track", "PageView");
+      w.fbq("set", "autoConfig", false, a.metaPixelId); w.fbq("init", a.metaPixelId); w.fbq("track", "PageView");
     }
   }
   function afterLoad(fn) {
@@ -89,7 +89,76 @@
     try {
       if (w.gtag) w.gtag("event", "click_whatsapp_cta", Object.assign({ transport_type: "beacon" }, p));
       if (w.clarity) w.clarity("event", "click_whatsapp_cta");
-      if (w.fbq) w.fbq("trackCustom", "click_whatsapp_cta", p);
+      if (w.fbq) w.fbq("track", "Contact", { content_name: p.cta_location });
     } catch (e) {}
   }, { capture: true });
+})();
+
+/* ---------- Contagem anônima do toque (contar.php, igual ao da Desejo de Menina e da Decisões)
+   Não depende do aceite: não envia cookie, identificador nem referer, só a origem do botão
+   (hero, sticky ou final) e, se a URL trouxer, o rótulo do conjunto de anúncios em "c" (o
+   parâmetro c, senão utm_term, senão utm_campaign), filtrado como no servidor. A reserva
+   ("Não abriu o WhatsApp?") não conta. O envio usa keepalive e não segura a navegação. ---------- */
+(function () {
+  "use strict";
+  var UTM_SEGURA = /^[\p{L}\p{M}0-9 _.|:+-]+$/u;
+  function rotulo(busca) {
+    var q = new URLSearchParams(busca), bruto = null;
+    ["c", "utm_term", "utm_campaign"].some(function (k) { var v = (q.get(k) || "").trim(); if (v) { bruto = v; return true; } return false; });
+    if (!bruto || Array.from(bruto).length > 80 || !UTM_SEGURA.test(bruto)) return null;
+    if (/\d{8,}/.test(bruto.replace(/(\d)[\s._|:+-]+(?=\d)/g, "$1"))) return null;
+    return bruto;
+  }
+  document.addEventListener("click", function (ev) {
+    var link = ev.target.closest && ev.target.closest("a[data-cta]");
+    if (!link || !/^https:\/\/chat\.whatsapp\.com\//.test(link.href)) return;
+    var corpo = { origem: link.getAttribute("data-cta") }, c = rotulo(location.search);
+    if (c) corpo.c = c;
+    try {
+      fetch("/contar.php", { method: "POST", keepalive: true, credentials: "omit", referrerPolicy: "no-referrer",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo) }).catch(function () {});
+    } catch (e) { /* sem fetch com keepalive: segue sem contar */ }
+  });
+})();
+
+/* ---------- Abrir o convite direto no app (mesmo desenho do ADR 0012 da Desejo de Menina) ----------
+   No navegador interno do Instagram e do Facebook, o primeiro toque num botão do grupo vai para
+   whatsapp://chat/?code=<convite> (o mesmo endereço da página de convite do WhatsApp) e, se a página
+   continuar visível 2,5 s depois, segue para o https. Os toques seguintes vão direto ao https.
+   Este ouvinte vem depois da contagem e do evento. Sem JS, fora desses navegadores, na reserva ou
+   com ABRIR_NO_APP = false (exceto com ?app=1), nada muda. ---------- */
+(function () {
+  "use strict";
+  var ABRIR_NO_APP = true;
+  var NAVEGADOR_DO_APP = /\b(?:Instagram|FBAN|FBAV|FB_IAB|FBIOS)\b/;
+  var ligado = ABRIR_NO_APP || new URLSearchParams(location.search).get("app") === "1";
+  var tentouApp = false;
+  function linkDoApp(href) {
+    var m = /^https:\/\/chat\.whatsapp\.com\/([A-Za-z0-9]{10,40})\/?$/.exec(String(href));
+    return m ? "whatsapp://chat/?code=" + m[1] : null;
+  }
+  document.addEventListener("click", function (ev) {
+    if (!ligado || tentouApp) return;
+    if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+    if (!NAVEGADOR_DO_APP.test(navigator.userAgent)) return;
+    var link = ev.target.closest && ev.target.closest("a[data-cta]");
+    if (!link) return;
+    var app = linkDoApp(link.href);
+    if (!app) return;
+    ev.preventDefault();
+    tentouApp = true;
+    var web = link.href, inicio = Date.now(), saiu = false;
+    var aoSair = function () { saiu = true; };
+    var aoMudar = function () { if (document.visibilityState === "hidden") saiu = true; };
+    document.addEventListener("visibilitychange", aoMudar);
+    window.addEventListener("pagehide", aoSair);
+    window.addEventListener("blur", aoSair);
+    window.location.href = app;
+    setTimeout(function () {
+      document.removeEventListener("visibilitychange", aoMudar);
+      window.removeEventListener("pagehide", aoSair);
+      window.removeEventListener("blur", aoSair);
+      if (!saiu && document.visibilityState !== "hidden" && Date.now() - inicio < 4000) window.location.href = web;
+    }, 2500);
+  });
 })();

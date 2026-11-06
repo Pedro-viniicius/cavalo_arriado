@@ -146,6 +146,8 @@ img { max-width: 100%; height: auto; display: block; }
 .cta--onlight:focus-visible { outline-color: var(--c-on-light); }
 
 .micro { font-size: var(--fs-micro); color: var(--c-muted); }
+.reserva { margin-top: var(--s-1); font-size: 1rem; color: var(--c-text); }
+.reserva a { font-weight: 600; text-decoration: underline; text-decoration-color: var(--c-action); text-underline-offset: 3px; }
 .micro--dark { color: #2B2615; }
 
 /* ---------- Seções ---------- */

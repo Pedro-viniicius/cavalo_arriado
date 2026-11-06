@@ -88,7 +88,7 @@ ${items}
   const ab = p.ab || {};
   const abScript = (ab.headlines?.length > 1 || ab.ctas?.length > 1)
     ? `<script>(function(){var q=new URLSearchParams(location.search),H=${JSON.stringify(ab.headlines || [])},C=${JSON.stringify(ab.ctas || [])},hl=${JSON.stringify(p.hero.headlineHighlight || "")};
-var h=+q.get("h")||0,c=+q.get("c")||0;if(!H[h])h=0;if(!C[c])c=0;document.documentElement.setAttribute("data-variant","h"+h+"c"+c);
+var h=+q.get("h")||0,c=+q.get("cta")||0;if(!H[h])h=0;if(!C[c])c=0;document.documentElement.setAttribute("data-variant","h"+h+"c"+c);
 if(h){var el=document.getElementById("titulo"),t=H[h];el.textContent=t;var i=hl?t.indexOf(hl):-1;if(i>=0){el.textContent=t.slice(0,i);var s=document.createElement("span");s.className="hl";s.textContent=hl;el.appendChild(s);el.appendChild(document.createTextNode(t.slice(i+hl.length)))}}
 if(c){document.querySelectorAll('[data-ab="cta"]').forEach(function(n){n.textContent=C[c]})}})();</script>`
     : "";
@@ -133,6 +133,12 @@ fs.mkdirSync(DIST, { recursive: true });
 copyDir(path.join(SRC, "assets"), path.join(DIST, "assets"));
 fs.copyFileSync(path.join(SRC, "styles.css"), path.join(DIST, "styles.css"));
 fs.copyFileSync(path.join(SRC, "main.js"), path.join(DIST, "main.js"));
+fs.copyFileSync(path.join(SRC, ".htaccess"), path.join(DIST, ".htaccess"));
+// Contador anônimo de toques e link direto para o grupo (idênticos aos da Desejo de Menina e da
+// Decisões que Dão Lucro) e a política de privacidade.
+for (const f of ["contar.php", "entrar.php"]) fs.copyFileSync(path.join(SRC, f), path.join(DIST, f));
+fs.writeFileSync(path.join(DIST, "privacidade.html"),
+  fs.readFileSync(path.join(SRC, "privacidade.html"), "utf8").replace('href="styles.css"', `href="styles.css?v=${version}"`));
 
 const warnings = [];
 for (const p of content.pages) {

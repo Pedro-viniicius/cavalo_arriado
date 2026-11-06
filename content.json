@@ -2,8 +2,8 @@
   "$comment": "Tudo que varia por campanha/nicho fica aqui. preview.label é a legenda completa da prévia. Rode `node build.js` depois de editar. Campos entre colchetes são placeholders a preencher.",
   "site": {
     "brand": "Achadinhos Black",
-    "baseUrl": "https://achadinhos-black-blush.vercel.app",
-    "privacyUrl": "[https://seudominio.com.br/privacidade]",
+    "baseUrl": "https://radardablackfriday.store",
+    "privacyUrl": "/privacidade",
     "eventLabel": "Black Friday · 27/11",
     "eventDateIso": "2026-11-27",
     "analytics": {
@@ -14,7 +14,7 @@
     "legal": {
       "affiliateNotice": "Os links do grupo podem ser de afiliados: podemos receber comissão por compras feitas por eles, sem custo extra para você.",
       "priceNotice": "Preços e estoque mudam a qualquer momento. Confirme sempre na loja antes de comprar.",
-      "owner": "[Nome ou razão social do responsável]"
+      "owner": "Achadinhos Black (contato: pedro.navez.ns@gmail.com)"
     }
   },
   "pages": [
@@ -106,11 +106,11 @@
         "faq": [
           {
             "q": "Vou receber muita mensagem?",
-            "a": "Só ofertas, em média [X] por dia. Você pode silenciar o grupo e olhar quando quiser."
+            "a": "Só achados selecionados. Você pode silenciar o grupo e olhar quando quiser, ou sair a qualquer momento."
           },
           {
             "q": "Meu número fica visível para os outros?",
-            "a": "[Explique como o grupo está configurado: por exemplo, se é uma Comunidade de avisos em que só admins veem os números.]"
+            "a": "Sim. Num grupo do WhatsApp, o seu número e o nome do seu perfil ficam visíveis para os administradores e os outros participantes. Se preferir, ajuste a privacidade do seu perfil no WhatsApp antes de entrar."
           },
           {
             "q": "De quais lojas vêm as ofertas?",
@@ -128,7 +128,7 @@
         "cta": "Entrar no grupo grátis"
       },
       "ab": {
-        "$comment": "Índice 0 é o padrão pré-renderizado. Troque pela URL: ?h=1&c=2 (sem JS, mostra o padrão).",
+        "$comment": "Índice 0 é o padrão pré-renderizado. Troque pela URL: ?h=1&cta=2 (sem JS, mostra o padrão). O ?c= é do rótulo do conjunto de anúncios (contagem).",
         "headlines": [
           "Achadinhos da Black Friday, conferidos, direto no seu WhatsApp.",
           "Receba achadinhos da Black Friday no WhatsApp, com preço conferido.",

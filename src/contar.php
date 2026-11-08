@@ -52,6 +52,7 @@ const PREFIXOS_ROTULO = [
 const ORIGENS = [
     'topo', 'hero', 'meio', 'quiz', 'final', 'sticky',
     'flutuante', 'como-comprar', 'rodape', 'oferta', 'privacidade', 'direto',
+    'hero-b', // botão da variante B (só hero), /entrar-no-grupo, nos três sites
 ];
 // Teto por chave e por dia, bem acima do volume real (centenas por dia). Não impede quem forjar
 // pedidos fora do navegador, mas deixa a inflação visível: ao bater o teto, o dia ganha

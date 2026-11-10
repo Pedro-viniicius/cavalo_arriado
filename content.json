@@ -140,6 +140,38 @@
           "Quero os achadinhos"
         ]
       }
+    },
+    {
+      "$comment": "Página só hero (/grupo): um hero e um único botão, para anúncio. layout hero usa src/template-hero.html + src/hero.css. O convite vem da página de inviteFrom (um endereço só para o grupo). O selo do topo é o site.eventLabel. Os textos ficam em caixa normal aqui; a caixa alta é do CSS. O botão conta como hero-b no contar.php.",
+      "slug": "grupo",
+      "layout": "hero",
+      "niche": "geral",
+      "inviteFrom": "index",
+      "seo": {
+        "title": "Achadinhos Black | A Black no seu WhatsApp",
+        "description": "Grupo gratuito no WhatsApp com ofertas conferidas de lojas que você já conhece, como Mercado Livre e Amazon. Sai quando quiser.",
+        "ogImage": "assets/img/og-geral.png",
+        "robots": "noindex,follow"
+      },
+      "hero": {
+        "headlineLines": [
+          "A Black",
+          "no seu",
+          "WhatsApp."
+        ],
+        "headlineHighlight": "WhatsApp.",
+        "subheadline": "Ofertas conferidas de lojas que você já conhece, como Mercado Livre e Amazon.",
+        "cta": "Entrar no grupo grátis",
+        "ctaOpening": "Abrindo o WhatsApp…",
+        "badges": [
+          "100% grátis",
+          "Sai quando quiser",
+          "+2.000 ofertas garimpadas"
+        ]
+      },
+      "legal": {
+        "storesNotice": "Indicamos ofertas com link para as lojas. Não somos o Mercado Livre nem a Amazon: pagamento, entrega e garantia são da própria loja."
+      }
     }
   ]
 }

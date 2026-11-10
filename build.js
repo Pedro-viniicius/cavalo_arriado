@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* Build sem dependências: node build.js
-   Lê content.json + src/template.html e gera dist/<slug>.html para cada página. */
+   Lê content.json + src/template.html e gera dist/<slug>.html para cada página.
+   Página com "layout": "hero" usa src/template-hero.html, com o src/hero.css embutido. */
 "use strict";
 const fs = require("fs");
 const path = require("path");
@@ -10,6 +11,11 @@ const SRC = path.join(ROOT, "src");
 const DIST = path.join(ROOT, "dist");
 const content = JSON.parse(fs.readFileSync(path.join(ROOT, "content.json"), "utf8"));
 const template = fs.readFileSync(path.join(SRC, "template.html"), "utf8");
+const templateHero = fs.readFileSync(path.join(SRC, "template-hero.html"), "utf8");
+// CSS da página só hero, embutido no HTML: tira comentários e espaços que não fazem falta.
+const heroCss = fs.readFileSync(path.join(SRC, "hero.css"), "utf8")
+  .replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, " ")
+  .replace(/ ?([{};,]) ?/g, "$1").replace(/: /g, ":").replace(/;}/g, "}").trim();
 const version = Date.now().toString(36);
 
 const esc = (s) => String(s ?? "")
@@ -114,9 +120,54 @@ if(c){document.querySelectorAll('[data-ab="cta"]').forEach(function(n){n.textCon
     affiliateNotice: esc(site.legal.affiliateNotice), priceNotice: esc(site.legal.priceNotice),
     owner: esc(site.legal.owner), privacyUrl: esc(site.privacyUrl), consent,
   };
-  return template.replace(/\{\{(\w+)\}\}/g, (m, k) => {
+  return fillTemplate(template, vars);
+}
+
+function fillTemplate(tpl, vars) {
+  return tpl.replace(/\{\{(\w+)\}\}/g, (m, k) => {
     if (!(k in vars)) throw new Error(`Variável sem valor no template: ${k}`);
     return vars[k];
+  });
+}
+
+/* ---------- Página só hero (layout "hero"): um hero e um único botão ----------
+   Identidade "Operação Black" (pranchas de 10/11/2026). A etiqueta e os ícones são os da prancha. */
+const TAG_HERO =
+  `<svg viewBox="0 0 120 120" aria-hidden="true" focusable="false"><g transform="rotate(-14 60 60)"><path d="M40 22H96Q104 22 104 30V90Q104 98 96 98H40L14 60Z" fill="#FFC21A" stroke="#FFC21A" stroke-width="6" stroke-linejoin="round"/><circle cx="32" cy="60" r="6" fill="#0E0E10"/><circle cx="60" cy="46" r="7.5" fill="none" stroke="#0E0E10" stroke-width="6"/><circle cx="84" cy="74" r="7.5" fill="none" stroke="#0E0E10" stroke-width="6"/><path d="M88 38 56 82" stroke="#0E0E10" stroke-width="7" stroke-linecap="round"/></g></svg>`;
+const ICONS_HERO = {
+  zap: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 20.5l1.3-4.2A8.5 8.5 0 1 1 8 19.4z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-2-1-1 .9a4 4 0 0 1-2.2-2.2l.9-1-1-2z"/></svg>',
+  check: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+};
+
+// O convite da página só hero é o de outra página (inviteFrom), para o grupo ter um endereço só.
+function inviteOf(p) {
+  if (p.inviteUrl) return p.inviteUrl;
+  const from = content.pages.find((x) => x.slug === (p.inviteFrom || "index"));
+  if (!from || !from.inviteUrl) throw new Error(`${p.slug}: sem inviteUrl (nem em "${p.inviteFrom || "index"}")`);
+  return from.inviteUrl;
+}
+
+function renderHero(site, p) {
+  const base = String(site.baseUrl).replace(/\/$/, "");
+  const [a, ...b] = site.brand.split(" ");
+  const logoHero = `<p class="logo">${TAG_HERO}<span class="vh">${esc(site.brand)}</span><span class="logo__p" aria-hidden="true"><span class="logo__a">${esc(a)}</span><span class="logo__b">${esc(b.join(" "))}</span></span></p>`;
+  // Cada linha do título é um bloco; o espaço entre os spans mantém as palavras separadas para o leitor de tela.
+  const headline = p.hero.headlineLines.map((l) => `<span class="l">${highlight(l, p.hero.headlineHighlight)}</span>`).join(" ");
+  const badges = p.hero.badges.slice(0, 3).map((t) => `        <li>${ICONS_HERO.check}${esc(t)}</li>`).join("\n");
+  const config = { niche: p.niche, slug: p.slug, analytics: site.analytics || {} };
+  return fillTemplate(templateHero, {
+    niche: esc(p.niche), version,
+    seoTitle: esc(p.seo.title), seoDescription: esc(p.seo.description), robots: esc(p.seo.robots || "index,follow"),
+    // O .htaccess serve /slug a partir de slug.html e redireciona o .html para o endereço limpo.
+    canonical: esc(`${base}/${p.slug === "index" ? "" : p.slug}`), ogImage: esc(`${base}/${p.seo.ogImage}`),
+    brand: esc(site.brand), eventLabel: esc(site.eventLabel),
+    css: heroCss, configJson: JSON.stringify(config).replace(/</g, "\\u003c"),
+    logo: logoHero, tag: TAG_HERO, iconZap: ICONS_HERO.zap,
+    heroHeadline: headline, heroSub: esc(p.hero.subheadline),
+    heroCta: esc(p.hero.cta), heroCtaOpening: esc(p.hero.ctaOpening),
+    inviteUrl: esc(inviteOf(p)), badges,
+    storesNotice: esc(p.legal.storesNotice), affiliateNotice: esc(site.legal.affiliateNotice),
+    privacyUrl: esc(site.privacyUrl),
   });
 }
 
@@ -142,11 +193,11 @@ fs.writeFileSync(path.join(DIST, "privacidade.html"),
 
 const warnings = [];
 for (const p of content.pages) {
-  const html = renderPage(content.site, p);
+  const html = p.layout === "hero" ? renderHero(content.site, p) : renderPage(content.site, p);
   fs.writeFileSync(path.join(DIST, `${p.slug}.html`), html);
-  const ph = [...new Set((html.replace(/<script[\s\S]*?<\/script>/g, "").match(/\[(?!data-)[^\]<"]{1,200}\]/g) || []))];
+  const ph = [...new Set((html.replace(/<(script|style)[\s\S]*?<\/\1>/g, "").match(/\[(?!data-)[^\]<"]{1,200}\]/g) || []))];
   if (ph.length) warnings.push(`${p.slug}.html: ${ph.length} placeholders → ${ph.join(" | ")}`);
-  if (/\[CODIGO\]/.test(p.inviteUrl)) warnings.push(`${p.slug}: inviteUrl ainda é placeholder`);
+  if (/\[CODIGO\]/.test(p.layout === "hero" ? inviteOf(p) : p.inviteUrl)) warnings.push(`${p.slug}: inviteUrl ainda é placeholder`);
   console.log(`✓ dist/${p.slug}.html (${(Buffer.byteLength(html) / 1024).toFixed(1)} KB)`);
 }
 warnings.forEach((w) => console.warn("⚠ " + w));

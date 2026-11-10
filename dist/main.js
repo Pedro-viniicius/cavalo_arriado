@@ -96,24 +96,30 @@
 
 /* ---------- Contagem anônima do toque (contar.php, igual ao da Desejo de Menina e da Decisões)
    Não depende do aceite: não envia cookie, identificador nem referer, só a origem do botão
-   (hero, sticky ou final) e, se a URL trouxer, o rótulo do conjunto de anúncios em "c" (o
-   parâmetro c, senão utm_term, senão utm_campaign), filtrado como no servidor. A reserva
+   (hero, sticky ou final; hero-b na página só hero, /grupo) e, se a URL trouxer, o rótulo do
+   conjunto de anúncios em "c" (o parâmetro c, senão utm_term, senão utm_campaign) e o nome do
+   anúncio em "a" (utm_content), os dois filtrados como no servidor. A reserva
    ("Não abriu o WhatsApp?") não conta. O envio usa keepalive e não segura a navegação. ---------- */
 (function () {
   "use strict";
   var UTM_SEGURA = /^[\p{L}\p{M}0-9 _.|:+-]+$/u;
-  function rotulo(busca) {
-    var q = new URLSearchParams(busca), bruto = null;
-    ["c", "utm_term", "utm_campaign"].some(function (k) { var v = (q.get(k) || "").trim(); if (v) { bruto = v; return true; } return false; });
+  function seguro(bruto) {
     if (!bruto || Array.from(bruto).length > 80 || !UTM_SEGURA.test(bruto)) return null;
     if (/\d{8,}/.test(bruto.replace(/(\d)[\s._|:+-]+(?=\d)/g, "$1"))) return null;
     return bruto;
   }
+  function rotulo(q) {
+    var bruto = null;
+    ["c", "utm_term", "utm_campaign"].some(function (k) { var v = (q.get(k) || "").trim(); if (v) { bruto = v; return true; } return false; });
+    return seguro(bruto);
+  }
   document.addEventListener("click", function (ev) {
     var link = ev.target.closest && ev.target.closest("a[data-cta]");
     if (!link || !/^https:\/\/chat\.whatsapp\.com\//.test(link.href)) return;
-    var corpo = { origem: link.getAttribute("data-cta") }, c = rotulo(location.search);
+    var q = new URLSearchParams(location.search);
+    var corpo = { origem: link.getAttribute("data-cta") }, c = rotulo(q), a = seguro((q.get("utm_content") || "").trim());
     if (c) corpo.c = c;
+    if (a) corpo.a = a;
     try {
       fetch("/contar.php", { method: "POST", keepalive: true, credentials: "omit", referrerPolicy: "no-referrer",
         headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo) }).catch(function () {});
@@ -161,4 +167,37 @@
       if (!saiu && document.visibilityState !== "hidden" && Date.now() - inicio < 4000) window.location.href = web;
     }, 2500);
   });
+})();
+
+/* ---------- Retorno visível do toque (limiar de Doherty), só no botão que pede ----------
+   Vale para o botão do grupo que traz <span data-cta-texto data-abrindo="Abrindo o WhatsApp…">
+   (hoje, só o da página só hero): na hora do toque o rótulo vira o texto de data-abrindo e o
+   botão ganha a classe "abrindo"; volta sozinho depois de 4 s ou quando a página retorna pelo
+   "Voltar" (bfcache). É só troca de texto e de cor (o movimento fica no CSS, que respeita
+   prefers-reduced-motion). Não segura a navegação, não trava toques e não muda a contagem. ---------- */
+(function () {
+  "use strict";
+  var ativo = null, volta = 0;
+  function restaurar() {
+    clearTimeout(volta);
+    if (!ativo) return;
+    ativo.link.classList.remove("abrindo");
+    ativo.texto.textContent = ativo.original;
+    if (ativo.aviso) ativo.aviso.textContent = "";
+    ativo = null;
+  }
+  document.addEventListener("click", function (ev) {
+    if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+    var link = ev.target.closest && ev.target.closest("a[data-cta]");
+    var texto = link && link.querySelector("[data-cta-texto][data-abrindo]");
+    if (!texto) return;
+    restaurar();
+    var abrindo = texto.getAttribute("data-abrindo");
+    ativo = { link: link, texto: texto, original: texto.textContent, aviso: document.querySelector("[data-aviso-abrindo]") };
+    link.classList.add("abrindo");
+    texto.textContent = abrindo;
+    if (ativo.aviso) ativo.aviso.textContent = abrindo;
+    volta = setTimeout(restaurar, 4000);
+  });
+  window.addEventListener("pageshow", function (ev) { if (ev.persisted) restaurar(); });
 })();

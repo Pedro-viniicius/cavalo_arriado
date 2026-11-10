@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR" data-niche="{{niche}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{seoTitle}}</title>
+<meta name="description" content="{{seoDescription}}">
+<meta name="robots" content="{{robots}}">
+<link rel="canonical" href="{{canonical}}">
+<meta name="theme-color" content="#0E0E10">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="{{brand}}">
+<meta property="og:title" content="{{seoTitle}}">
+<meta property="og:description" content="{{seoDescription}}">
+<meta property="og:url" content="{{canonical}}">
+<meta property="og:image" content="{{ogImage}}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{brand}}: {{eventLabel}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{seoTitle}}">
+<meta name="twitter:description" content="{{seoDescription}}">
+<meta name="twitter:image" content="{{ogImage}}">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preload" href="assets/fonts/archivo-expanded-black.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>{{css}}</style>
+<script type="application/json" id="page-config">{{configJson}}</script>
+<script src="main.js?v={{version}}" defer></script>
+</head>
+<body>
+<div class="pagina">
+  <header class="topo">
+    {{logo}}
+  </header>
+
+  <main class="hero" id="conteudo">
+    <div class="arte" aria-hidden="true">{{tag}}</div>
+    <div class="texto">
+      <p class="selo">{{eventLabel}}</p>
+      <h1>{{heroHeadline}}</h1>
+      <p class="sub">{{heroSub}}</p>
+      <a class="cta" href="{{inviteUrl}}" data-cta="hero-b" rel="noopener">{{iconZap}}<span data-cta-texto data-abrindo="{{heroCtaOpening}}">{{heroCta}}</span><span class="vh"> (abre o WhatsApp)</span></a>
+      <ul class="selos" role="list">
+{{badges}}
+      </ul>
+      <p class="reserva">Não abriu o WhatsApp? <a href="{{inviteUrl}}" data-reserva>Toque aqui<span class="vh"> para abrir o convite do grupo</span></a></p>
+      <p class="vh" aria-live="polite" data-aviso-abrindo></p>
+    </div>
+  </main>
+
+  <footer class="rodape">
+    <p>{{storesNotice}}</p>
+    <p>{{affiliateNotice}}</p>
+    <p class="rodape__link"><a href="{{privacyUrl}}">Política de privacidade</a></p>
+  </footer>
+</div>
+</body>
+</html>

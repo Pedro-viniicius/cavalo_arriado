@@ -7,22 +7,35 @@
  * Mudou um, mude o outro, e confira com diff antes de publicar.
  *
  * POST /contar.php com {"origem": "hero"}         -> soma 1 no toque do botão do grupo
- * POST /contar.php com {"origem": "hero", "c": "conjunto-a"}
- *      -> soma 1 em grupo.hero e 1 em c."conjunto-a" (rótulo do conjunto de anúncios, que a
- *         página lê do parâmetro c, utm_term ou utm_campaign da URL). Rótulo fora da regra
- *         (até 80 caracteres, só letras, números de 0 a 9, espaço e _ . | : + -, sem 8 dígitos
- *         seguidos, e começando com o prefixo do site em PREFIXOS_ROTULO) vira "outro"; depois de
- *         LIMITE_ROTULOS rótulos diferentes no dia, os novos também.
- * POST /contar.php com {"produto": "liz-flora"}   -> soma 1 no toque de um achadinho
+ * POST /contar.php com {"origem": "hero", "c": "conjunto-a", "a": "anuncio-1"}
+ *      -> soma 1 em grupo.hero, 1 em c."conjunto-a" (rótulo do conjunto de anúncios, que a
+ *         página lê do parâmetro c, utm_term ou utm_campaign da URL) e 1 em a."anuncio-1" (nome
+ *         do anúncio, que a página lê do utm_content). "c" e "a" são opcionais: o corpo pode ser
+ *         {origem}, {origem, c}, {origem, a} ou {origem, c, a}, e qualquer outro campo dá 400.
+ *         Rótulo fora da regra (até 80 caracteres e BYTES_ROTULO bytes, só letras, números de
+ *         0 a 9, espaço e _ . | : + -, sem 8 dígitos seguidos, e começando com o prefixo do site
+ *         em PREFIXOS_ROTULO) vira "outro"; depois de LIMITE_ROTULOS rótulos diferentes no dia,
+ *         somando "c" e "a", os novos também.
+ *      -> todo toque de botão soma também 1 em h."HH|origem": a hora de Brasília, com dois
+ *         dígitos, e a origem já normalizada (h."14|hero", h."09|outro"), para casar o toque com
+ *         a entrada no grupo da mesma hora (desde 10/11/2026).
+ * POST /contar.php com {"origem": "reserva-c"}    -> soma 1 só em reserva."reserva-c": o link do
+ *      plano B (RESERVAS), tocado pela mesma pessoa do primeiro toque, não entra em grupo, c, a
+ *      nem h, para não contar duas vezes; "c" e "a" que vierem junto são ignorados.
+ * POST /contar.php com {"produto": "liz-flora"}   -> soma 1 no toque de um achadinho, sem hora
  *      (só na Desejo; o .htaccess de lá também manda /api/clique para cá)
  * GET  /contar.php?resumo com o cabeçalho X-Chave -> totais dos últimos 31 dias, em JSON, com os
- *      grupos "grupo", "c" e "produto" de cada dia
+ *      grupos "grupo", "c", "a", "h", "reserva" e "produto" de cada dia (os que existirem no dia).
+ *      Pior caso, com pedidos forjados: cerca de 1 MB em 31 dias, abaixo dos 2 MB que o painel
+ *      lê (TAMANHO_MAXIMO_RESPOSTA em painel/_lib/inicio.php); a conta está no
+ *      site/test/contar-hostinger.test.js da Desejo.
  * O entrar.php (link direto do anúncio para o convite) grava no mesmo arquivo do dia, com a
- * origem "direto" e as mesmas funções rotuloValido(), rotuloDoSite() e somar(), copiadas daqui.
- * Ele não conta robôs de prévia de link nem pré-carga do navegador.
+ * origem "direto" (e h."HH|direto") e as mesmas funções rotuloValido(), rotuloDoSite() e
+ * somar(), copiadas daqui. Ele não conta robôs de prévia de link nem pré-carga do navegador.
  *
  * Não grava cookie, IP, user agent, referer nem nenhum identificador: só o total do dia por
- * botão. (O log de acesso da própria Hostinger registra o pedido, como qualquer acesso.)
+ * botão, por conjunto e por anúncio, e o total de cada hora por botão. (O log de acesso da
+ * própria Hostinger registra o pedido, como qualquer acesso.)
  * Os totais ficam em ../contagem/AAAA-MM-DD.json, FORA do public_html, porque o deploy do
  * site substitui o public_html inteiro.
  * A chave de leitura não fica aqui, só o SHA-256 dela. A chave é aleatória (32 bytes de
@@ -53,15 +66,28 @@ const ORIGENS = [
     'topo', 'hero', 'meio', 'quiz', 'final', 'sticky',
     'flutuante', 'como-comprar', 'rodape', 'oferta', 'privacidade', 'direto',
     'hero-b', // botão da variante B (só hero), /entrar-no-grupo, nos três sites
+    // Páginas novas da Desejo (10/11/2026): vitrine (c), prévia do grupo (d) e a B melhorada (b2).
+    'hero-c', 'hero-d', 'hero-b2',
 ];
+// Link do plano B das páginas novas, quando o primeiro toque não abriu o WhatsApp. É a mesma
+// pessoa do primeiro toque: soma só no grupo "reserva", fora de grupo, c, a e h.
+const RESERVAS = ['reserva-c', 'reserva-d', 'reserva-b2'];
 // Teto por chave e por dia, bem acima do volume real (centenas por dia). Não impede quem forjar
 // pedidos fora do navegador, mas deixa a inflação visível: ao bater o teto, o dia ganha
 // "_teto": true no resumo, e a contagem daquela chave para.
 const TETO_POR_DIA = 2000;
-const TAMANHO_MAXIMO = 512;
-// Rótulos diferentes por dia no grupo "c": o anúncio usa poucos conjuntos, e o teto impede que
-// pedidos forjados com rótulos sempre novos inchem o arquivo do dia.
+// Cabe o maior corpo que a página consegue montar: a origem mais longa ("como-comprar") e dois
+// rótulos de 80 caracteres de 4 bytes em UTF-8 têm 679 bytes. Rótulo acima de BYTES_ROTULO vira
+// "outro", mas o toque conta em grupo e h (com 512, esse corpo dava 400 e o toque se perdia).
+const TAMANHO_MAXIMO = 1024;
+// Rótulos diferentes por dia, somando os grupos "c" e "a" (o "outro" de cada um entra na conta):
+// o anúncio usa poucos conjuntos e poucos anúncios, e o teto impede que pedidos forjados com
+// rótulos sempre novos inchem o arquivo do dia. O grupo "h" não precisa dele: as chaves já são
+// fechadas (24 horas vezes as ORIGENS e "outro").
 const LIMITE_ROTULOS = 200;
+// Bytes de um rótulo em UTF-8. Os nomes reais (ASCII, até 80 caracteres, como
+// "DESEJO | F4 | M07 Meme | B") passam; com o LIMITE_ROTULOS, segura o resumo de 31 dias.
+const BYTES_ROTULO = 120;
 
 function responder(int $status, ?array $corpo = null): void
 {
@@ -109,14 +135,15 @@ function rotuloValido($valor): string
 }
 
 /**
- * Rótulo do conjunto para este site: a regra de rotuloValido() e, além dela, começar com o
- * prefixo do site (PREFIXOS_ROTULO) seguido de fim, espaço, |, _ ou -. Fora disso, "outro".
+ * Rótulo do conjunto ou do anúncio para este site: a regra de rotuloValido() e, além dela, até
+ * BYTES_ROTULO bytes e começar com o prefixo do site (PREFIXOS_ROTULO) seguido de fim, espaço,
+ * |, _ ou -. Fora disso, "outro".
  */
 function rotuloDoSite(string $host, $valor): string
 {
     $rotulo = rotuloValido($valor);
     $prefixo = PREFIXOS_ROTULO[$host] ?? '';
-    if ($prefixo === '' || !preg_match('/^' . preg_quote($prefixo, '/') . '(?=$|[ |_-])/', $rotulo)) {
+    if ($prefixo === '' || strlen($rotulo) > BYTES_ROTULO || !preg_match('/^' . preg_quote($prefixo, '/') . '(?=$|[ |_-])/', $rotulo)) {
         return 'outro';
     }
     return $rotulo;
@@ -142,7 +169,10 @@ function somar(string $arquivo, array $chaves): int
             $mudou = false;
             foreach ($chaves as $grupo => $chave) {
                 $atuais = is_array($dados[$grupo] ?? null) ? $dados[$grupo] : [];
-                if ($grupo === 'c' && !array_key_exists($chave, $atuais) && count($atuais) >= LIMITE_ROTULOS) {
+                // O limite de rótulos vale para "c" e "a" juntos.
+                $rotulosDoDia = count(is_array($dados['c'] ?? null) ? $dados['c'] : [])
+                    + count(is_array($dados['a'] ?? null) ? $dados['a'] : []);
+                if (($grupo === 'c' || $grupo === 'a') && !array_key_exists($chave, $atuais) && $rotulosDoDia >= LIMITE_ROTULOS) {
                     $chave = 'outro';
                 }
                 $atual = (int) ($atuais[$chave] ?? 0);
@@ -185,6 +215,7 @@ if (!array_key_exists($host, SITES)) {
 
 $pasta = dirname(__DIR__) . '/contagem';
 date_default_timezone_set('America/Sao_Paulo');
+$agora = time(); // o mesmo instante para o arquivo do dia e para a hora do grupo "h"
 $metodo = $_SERVER['REQUEST_METHOD'] ?? '';
 
 // ---------- Leitura dos totais (só com a chave) ----------
@@ -221,7 +252,7 @@ if ($bruto === '' || strlen($bruto) > TAMANHO_MAXIMO) {
     responder(400);
 }
 $corpo = json_decode($bruto, true);
-if (!is_array($corpo) || count($corpo) < 1 || count($corpo) > 2) {
+if (!is_array($corpo) || count($corpo) < 1 || count($corpo) > 3) {
     responder(400);
 }
 
@@ -240,12 +271,22 @@ if (isset($corpo['produto']) && count($corpo) === 1) {
         responder(400);
     }
     $chaves = ['produto' => $produto];
-} elseif (isset($corpo['origem']) && (count($corpo) === 1 || array_key_exists('c', $corpo))) {
-    // {origem} ou {origem, c}: qualquer outro campo é recusado.
+} elseif (isset($corpo['origem']) && array_diff(array_keys($corpo), ['origem', 'c', 'a']) === []) {
+    // {origem}, {origem, c}, {origem, a} ou {origem, c, a}: qualquer outro campo é recusado.
     $origem = $corpo['origem'];
-    $chaves = ['grupo' => is_string($origem) && in_array($origem, ORIGENS, true) ? $origem : 'outro'];
-    if (array_key_exists('c', $corpo)) {
-        $chaves['c'] = rotuloDoSite($host, $corpo['c']);
+    if (is_string($origem) && in_array($origem, RESERVAS, true)) {
+        // Plano B: só "reserva". O c e o a que vierem junto são ignorados.
+        $chaves = ['reserva' => $origem];
+    } else {
+        $chaves = ['grupo' => is_string($origem) && in_array($origem, ORIGENS, true) ? $origem : 'outro'];
+        if (array_key_exists('c', $corpo)) {
+            $chaves['c'] = rotuloDoSite($host, $corpo['c']);
+        }
+        if (array_key_exists('a', $corpo)) {
+            $chaves['a'] = rotuloDoSite($host, $corpo['a']);
+        }
+        // Hora de Brasília e a origem já normalizada: nunca um texto que veio no corpo.
+        $chaves['h'] = date('H', $agora) . '|' . $chaves['grupo'];
     }
 } else {
     responder(400);
@@ -255,4 +296,4 @@ if (!is_dir($pasta) && !@mkdir($pasta, 0700, true) && !is_dir($pasta)) {
     responder(500);
 }
 
-responder(somar($pasta . '/' . date('Y-m-d') . '.json', $chaves));
+responder(somar($pasta . '/' . date('Y-m-d', $agora) . '.json', $chaves));

@@ -6,9 +6,12 @@
  * em achadosTech/public/ e em langeBlack/src/. Mudou um, mude os outros, e confira com diff antes
  * de publicar. Trocou o convite de um site? Troque também em CONVITES, aqui nas três cópias.
  *
- * GET /entrar.php?c=conjunto-a -> soma 1 em grupo.direto e 1 em c."conjunto-a" no arquivo do dia
- *                                 do contar.php e responde 302 para o convite do grupo do site.
- * GET /entrar.php              -> soma 1 só em grupo.direto e redireciona do mesmo jeito.
+ * GET /entrar.php?c=conjunto-a -> soma 1 em grupo.direto, 1 em c."conjunto-a" e 1 em h."HH|direto"
+ *                                 (hora de Brasília, com dois dígitos, como no contar.php) no
+ *                                 arquivo do dia do contar.php e responde 302 para o convite do
+ *                                 grupo do site.
+ * GET /entrar.php              -> soma 1 só em grupo.direto e em h."HH|direto" e redireciona do
+ *                                 mesmo jeito.
  * HEAD                         -> só redireciona, sem contar (pré-visualização de link).
  * GET de robô ou pré-carga     -> só redireciona, sem contar: cabeçalho X-Purpose, Purpose ou
  *                                 Sec-Purpose com "preview" ou "prefetch", ou user agent de robô
@@ -17,14 +20,14 @@
  *                                 Facebook (FBAN, FBAV, Instagram) é gente e conta.
  *
  * O convite é FIXO por site, na constante CONVITES: nenhum valor da URL decide o destino (sem
- * open redirect). O rótulo segue a regra do contar.php (até 80 caracteres, só letras, números
- * de 0 a 9, espaço e _ . | : + -, sem 8 dígitos seguidos, começando com o prefixo do site em
- * PREFIXOS_ROTULO); fora dela, vira "outro". Se a contagem falhar, o redirecionamento acontece
+ * open redirect). O rótulo segue a regra do contar.php (até 80 caracteres e BYTES_ROTULO bytes,
+ * só letras, números de 0 a 9, espaço e _ . | : + -, sem 8 dígitos seguidos, começando com o
+ * prefixo do site em PREFIXOS_ROTULO); fora dela, vira "outro". Se a contagem falhar, o redirecionamento acontece
  * mesmo assim.
  *
  * Lê o user agent só para descartar robôs, sem gravar. Não grava cookie, IP, user agent,
- * referer nem nenhum identificador: só o total do dia por chave, em ../contagem/AAAA-MM-DD.json,
- * fora do public_html (o mesmo arquivo do contar.php).
+ * referer nem nenhum identificador: só o total do dia por chave e o total de cada hora, em
+ * ../contagem/AAAA-MM-DD.json, fora do public_html (o mesmo arquivo do contar.php).
  */
 
 declare(strict_types=1);
@@ -49,6 +52,7 @@ const PREFIXOS_ROTULO = [
 ];
 const TETO_POR_DIA = 2000;
 const LIMITE_ROTULOS = 200;
+const BYTES_ROTULO = 120;
 
 /**
  * Rótulo do conjunto de anúncios, com a mesma regra da página (corpoDoToque no index.html da
@@ -70,14 +74,15 @@ function rotuloValido($valor): string
 }
 
 /**
- * Rótulo do conjunto para este site: a regra de rotuloValido() e, além dela, começar com o
- * prefixo do site (PREFIXOS_ROTULO) seguido de fim, espaço, |, _ ou -. Fora disso, "outro".
+ * Rótulo do conjunto ou do anúncio para este site: a regra de rotuloValido() e, além dela, até
+ * BYTES_ROTULO bytes e começar com o prefixo do site (PREFIXOS_ROTULO) seguido de fim, espaço,
+ * |, _ ou -. Fora disso, "outro".
  */
 function rotuloDoSite(string $host, $valor): string
 {
     $rotulo = rotuloValido($valor);
     $prefixo = PREFIXOS_ROTULO[$host] ?? '';
-    if ($prefixo === '' || !preg_match('/^' . preg_quote($prefixo, '/') . '(?=$|[ |_-])/', $rotulo)) {
+    if ($prefixo === '' || strlen($rotulo) > BYTES_ROTULO || !preg_match('/^' . preg_quote($prefixo, '/') . '(?=$|[ |_-])/', $rotulo)) {
         return 'outro';
     }
     return $rotulo;
@@ -118,7 +123,10 @@ function somar(string $arquivo, array $chaves): int
             $mudou = false;
             foreach ($chaves as $grupo => $chave) {
                 $atuais = is_array($dados[$grupo] ?? null) ? $dados[$grupo] : [];
-                if ($grupo === 'c' && !array_key_exists($chave, $atuais) && count($atuais) >= LIMITE_ROTULOS) {
+                // O limite de rótulos vale para "c" e "a" juntos.
+                $rotulosDoDia = count(is_array($dados['c'] ?? null) ? $dados['c'] : [])
+                    + count(is_array($dados['a'] ?? null) ? $dados['a'] : []);
+                if (($grupo === 'c' || $grupo === 'a') && !array_key_exists($chave, $atuais) && $rotulosDoDia >= LIMITE_ROTULOS) {
                     $chave = 'outro';
                 }
                 $atual = (int) ($atuais[$chave] ?? 0);
@@ -174,9 +182,11 @@ if ($metodo === 'GET' && !ehRoboOuPreCarga()) {
     }
     $pasta = dirname(__DIR__) . '/contagem';
     date_default_timezone_set('America/Sao_Paulo');
+    $agora = time(); // o mesmo instante para o arquivo do dia e para a hora do grupo "h"
+    $chaves['h'] = date('H', $agora) . '|direto';
     // A contagem é o de menos: se a pasta ou o arquivo falharem, a visitante segue para o grupo.
     if (is_dir($pasta) || @mkdir($pasta, 0700, true) || is_dir($pasta)) {
-        somar($pasta . '/' . date('Y-m-d') . '.json', $chaves);
+        somar($pasta . '/' . date('Y-m-d', $agora) . '.json', $chaves);
     }
 }
 
